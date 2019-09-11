@@ -3,20 +3,34 @@ require('dotenv').config();
 const request = require('supertest');
 const app = require('../../lib/app');
 const client = require('../utils/client');
-const child_process = require('child_process');
 
 describe('notes routes', () => {
   beforeEach(() => {
-    child_process.execSync('npm run recreate-tables');
+    return client.query(`
+      DELETE from notes;
+      DELETE from authors;
+    `);
+  });
+
+  let author = null;
+
+  beforeEach(() => {
+    return client.query(`
+      INSERT INTO authors(name, url)
+      VALUES ('blogger', 'http://blogger.com')
+      RETURNING #;
+    `)
+      .then(result => author = result.rows[0])
+      .then(author => TEST_NOTE.authorId = author.id);
   });
 
   afterAll(() => {
-    client.end();
+    return client.end();
   });
 
   const TEST_NOTE = {
     title: 'meow note',
-    author: 'max the cat',
+    authorId: -1, // will be populated by beforeEach
     body: 'I am a kitty, meow!'
   };
 
@@ -29,7 +43,7 @@ describe('notes routes', () => {
     expect(note).toEqual({
       id: expect.any(Number),
       title: 'meow note',
-      author: 'max the cat',
+      authorId: -1,
       body: 'I am a kitty, meow!',
       created: expect.any(String)
     });

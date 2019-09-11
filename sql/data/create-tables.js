@@ -3,9 +3,14 @@
 const client = require('../utils/client');
 
 client.query(`
+  CREATE TABLE authors (
+    id SERIAL PRIMARY KEY,
+    name VARCHAT(256) NOT NULL,
+    url VARCHAR(256)
+  )
   CREATE TABLE notes (
     id SERIAL PRIMARY KEY,
-    author VARCHAR(256) NOT NULL,
+    author_id INTEGER NOT NULL REFERENCES authors(id),
     title VARCHAR(256) NOT NULL,
     body TEXT NOT NULL,
     created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -18,3 +23,4 @@ client.query(`
   .then(() => {
     client.end();
   });
+ 
